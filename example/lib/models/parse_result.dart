@@ -3,8 +3,7 @@ class ParseResult {
   final String type;
   final String international;
   final String national;
-  final String countryCode;
-  final String nationalNumber;
+  final int countryCode;
   final String errorCode;
 
   ParseResult._({
@@ -13,7 +12,6 @@ class ParseResult {
     this.international,
     this.national,
     this.countryCode,
-    this.nationalNumber,
     this.errorCode,
   });
 
@@ -25,7 +23,6 @@ class ParseResult {
         international: map['international'],
         national: map['national'],
         countryCode: map['country_code'],
-        nationalNumber: map['national_number'],
       );
 
   factory ParseResult.error(code) => ParseResult._(errorCode: code);
@@ -38,7 +35,6 @@ class ParseResult {
         'international: $international, '
         'national: $national, '
         'countryCode: $countryCode, '
-        'nationalNumber: $nationalNumber, '
         'errorCode: $errorCode}';
   }
 }

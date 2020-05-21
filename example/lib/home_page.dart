@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:phone_number/phone_number.dart';
 import 'package:phone_number_example/models/parse_result.dart';
 import 'package:phone_number_example/models/region.dart';
 import 'package:phone_number_example/region_picker.dart';
-import 'package:phone_number_example/store.dart';
-
-/// TODO: Add previous hardcoded examples
-// parse '17449106505' (MX)
-// parse list "+48606723456", "+48774843312"
-// format '+47234723432', 'BR'
 
 class HomePage extends StatefulWidget {
   @override
@@ -18,19 +13,30 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final regionCtrl = TextEditingController();
   final numberCtrl = TextEditingController();
-  final store = Store(PhoneNumber());
   final key = GlobalKey<FormState>();
 
-  Region region;
-  ParseResult result;
+  final plugin = PhoneNumber();
 
-  bool get hasResult => result != null;
+  List<Region> regions;
+  Region selectedRegion;
+  ParseResult result;
+  bool ignoreType = false;
 
   Future<void> parse() async {
     setState(() => result = null);
     if (key.currentState.validate()) {
       dismissKeyboard();
-      result = await store.parse(numberCtrl.text, region: region);
+      try {
+        final parsed = await plugin.parse(
+          numberCtrl.text,
+          region: selectedRegion?.code,
+          ignoreType: ignoreType,
+        );
+        result = ParseResult(parsed);
+      } catch (e) {
+        result = ParseResult.error(e.code);
+      }
+
       setState(() {});
     }
   }
@@ -38,8 +44,15 @@ class _HomePageState extends State<HomePage> {
   void format() async {
     if (key.currentState.validate()) {
       dismissKeyboard();
-      final formatted  = await store.format(numberCtrl.text, region);
-      numberCtrl.text = formatted;
+      try {
+        final formatted = await plugin.format(
+          numberCtrl.text,
+          selectedRegion.code,
+        );
+        numberCtrl.text = formatted;
+      } on PlatformException catch (e) {
+        numberCtrl.text = e.code;
+      }
       setState(() {});
     }
   }
@@ -48,26 +61,40 @@ class _HomePageState extends State<HomePage> {
     key.currentState.reset();
     regionCtrl.text = '';
     numberCtrl.text = '';
-    region = null;
+    selectedRegion = null;
     result = null;
     setState(() {});
   }
 
-
   void chooseRegions() async {
     dismissKeyboard();
-    final regions = await store.getRegions();
+    final regions = await getRegions();
     await showModalBottomSheet<Region>(
       context: context,
       builder: (context) => RegionPicker(
         regions: regions,
         onSelectedRegion: (r) {
           regionCtrl.text = "${r.code} (+${r.prefix})";
-          setState(() => region = r);
+          setState(() => selectedRegion = r);
           Navigator.of(context).pop();
         },
       ),
     );
+  }
+
+  Future<List<Region>> getRegions() async {
+    if (regions == null) {
+      final data = await plugin.allSupportedRegions();
+
+      // Filter out regions with more than 2 characters
+      regions = data.entries
+          .where((e) => e.key.length <= 2)
+          .map((e) => Region(e.key, e.value))
+          .toList();
+
+      regions.sort();
+    }
+    return regions;
   }
 
   void dismissKeyboard() => FocusScope.of(context).unfocus();
@@ -79,67 +106,76 @@ class _HomePageState extends State<HomePage> {
       child: Scaffold(
         appBar: AppBar(title: Text('Phone Number')),
         body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-            child: Form(
-              key: key,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  TextFormField(
-                    controller: numberCtrl,
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    autofocus: true,
-                    keyboardType: TextInputType.phone,
-                    validator: (v) => v?.isEmpty == true ? 'Required' : null,
-                    decoration: InputDecoration(
-                      labelText: 'Phone Number',
-                      helperText: '',
-                    ),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          child: Form(
+            key: key,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                TextFormField(
+                  controller: numberCtrl,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  autofocus: true,
+                  keyboardType: TextInputType.phone,
+                  validator: (v) => v?.isEmpty == true ? 'Required' : null,
+                  decoration: InputDecoration(
+                    labelText: 'Phone Number',
+                    helperText: '',
                   ),
-                  InkWell(
-                    onTap: chooseRegions,
-                    child: IgnorePointer(
-                      child: TextFormField(
-                        controller: regionCtrl,
-                        decoration: InputDecoration(
-                          labelText: 'Region',
-                          helperText: '',
-                        ),
+                ),
+                InkWell(
+                  onTap: chooseRegions,
+                  child: IgnorePointer(
+                    child: TextFormField(
+                      controller: regionCtrl,
+                      decoration: InputDecoration(
+                        labelText: 'Region',
+                        helperText: '',
                       ),
                     ),
                   ),
-                  SizedBox(height: 20),
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: RaisedButton(
-                          child: Text('Format'),
-                          onPressed: regionCtrl.text.isEmpty ? null:  format,
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: RaisedButton(
-                          child: Text('Parse'),
-                          onPressed: parse,
-                        ),
-                      ),
-                    ],
-                  ),
-                  OutlineButton(
-                    child: Text('Reset'),
-                    onPressed: reset,
-                  ),
-                  SizedBox(height: 20),
-                  if (hasResult)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: Result(result: result),
+                ),
+                Row(
+                  children: <Widget>[
+                    Checkbox(
+                      visualDensity: VisualDensity.compact,
+                      onChanged: (v) => setState(() => ignoreType = v),
+                      value: ignoreType,
+                      tristate: false,
                     ),
-                ],
-              ),
+                    Text('Ignore type when parsing')
+                  ],
+                ),
+                SizedBox(height: 20),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: RaisedButton(
+                        child: Text('Format'),
+                        onPressed: selectedRegion == null ? null : format,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: RaisedButton(
+                        child: Text('Parse'),
+                        onPressed: parse,
+                      ),
+                    ),
+                  ],
+                ),
+                OutlineButton(
+                  child: Text('Reset'),
+                  onPressed: reset,
+                ),
+                SizedBox(height: 20),
+                if (result != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Result(result: result),
+                  ),
+              ],
             ),
           ),
         ),
@@ -174,7 +210,8 @@ class Result extends StatelessWidget {
                 _ResultRow(name: 'E164', value: result.e164),
                 _ResultRow(name: 'International', value: result.international),
                 _ResultRow(name: 'National', value: result.national),
-                _ResultRow(name: 'Country code', value: result.countryCode),
+                _ResultRow(
+                    name: 'Country code', value: result.countryCode.toString()),
               ],
       ],
     );
