@@ -1,6 +1,4 @@
 PODS:
-  - e2e (0.0.1):
-    - Flutter
   - Flutter (1.0.0)
   - phone_number (0.0.1):
     - Flutter
@@ -8,7 +6,6 @@ PODS:
   - PhoneNumberKit/PhoneNumberKitCore (3.2.0)
 
 DEPENDENCIES:
-  - e2e (from `.symlinks/plugins/e2e/ios`)
   - Flutter (from `Flutter`)
   - phone_number (from `.symlinks/plugins/phone_number/ios`)
 
@@ -17,15 +14,12 @@ SPEC REPOS:
     - PhoneNumberKit
 
 EXTERNAL SOURCES:
-  e2e:
-    :path: ".symlinks/plugins/e2e/ios"
   Flutter:
     :path: Flutter
   phone_number:
     :path: ".symlinks/plugins/phone_number/ios"
 
 SPEC CHECKSUMS:
-  e2e: d0c9f8c832b4cc7ab386d0c0f0af67fe5ac0c3bd
   Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
   phone_number: 9eca06d53e8bd2c30e2299fdb3565c2edbf96d17
   PhoneNumberKit: df411d46177d1492da84e10b6c093846dd861452
