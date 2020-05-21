@@ -2,7 +2,7 @@ PODS:
   - e2e (0.0.1):
     - Flutter
   - Flutter (1.0.0)
-  - phone_number (0.6.2):
+  - phone_number (0.0.1):
     - Flutter
     - PhoneNumberKit/PhoneNumberKitCore (~> 3.2.0)
   - PhoneNumberKit/PhoneNumberKitCore (3.2.0)
@@ -27,9 +27,9 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   e2e: d0c9f8c832b4cc7ab386d0c0f0af67fe5ac0c3bd
   Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
-  phone_number: b545f5b7d9711bec0f020c7df43ae5a82119f4ad
+  phone_number: 9eca06d53e8bd2c30e2299fdb3565c2edbf96d17
   PhoneNumberKit: df411d46177d1492da84e10b6c093846dd861452
 
-PODFILE CHECKSUM: 1b66dae606f75376c5f2135a8290850eeb09ae83
+PODFILE CHECKSUM: c34e2287a9ccaa606aeceab922830efb9a6ff69a
 
 COCOAPODS: 1.9.1
