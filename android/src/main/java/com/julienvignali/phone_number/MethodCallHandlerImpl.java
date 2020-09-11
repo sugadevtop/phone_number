@@ -73,10 +73,6 @@ public class MethodCallHandlerImpl implements MethodChannel.MethodCallHandler {
     try {
       final PhoneNumber phoneNumber = util.parse(string, region);
 
-      if (!util.isValidNumber(phoneNumber)) {
-        return null;
-      }
-
       // Try to parse the string to a phone number for a given region.
 
       // If the parsing is successful, we return a map containing :
